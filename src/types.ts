@@ -50,7 +50,7 @@ export abstract class BaseModule {
    */
   updateSettingValue(settingId: string, newValue: any): void {
     // Loop through each group and setting to find the setting with the given id
-    this.settings.groups.forEach((group) => {
+    this.settings.forEach((group) => {
       const settingToUpdate = group.settings.find(
         (setting) => setting.id === settingId,
       );
@@ -68,8 +68,8 @@ export abstract class BaseModule {
    * @param settingId The ID of the setting to retrieve
    */
   getSettingValue(settingId: string): any | undefined {
-    this.settings.groups.forEach((group) => {
-      return group.settings.find((setting) => setting.id === settingId);
+    this.settings.forEach((group) => {
+      return group.settings.find((setting) => setting.id === settingId)?.value;
     });
   }
 
@@ -128,9 +128,7 @@ export class Response {
   }
 }
 
-export type ModuleSettings = {
-  groups: SettingsGroup[];
-};
+export type ModuleSettings = SettingsGroup[];
 
 export type SettingsGroup = {
   title: string;
@@ -222,19 +220,27 @@ export enum MediaType {
   UNKNOWN,
 }
 
+export type Titles = {
+  primary: string;
+  secondary?: string;
+};
+
+export type HexColor = `#${string}`;
+
+export type Label = {
+  text: string;
+  color: HexColor;
+};
+
 export type DiscoverListing = {
   url: string;
-  titles: {
-    primary: any;
-    secondary?: string | null;
-  };
-  image: string | null;
-  subtitle: any;
-  iconText?: string;
-  showIcon: boolean;
+  titles: Titles;
+  poster: string;
+  description: string;
+  label?: Label;
   indicator: string;
-  current?: number | null;
-  total?: number | null;
+  current?: number;
+  total?: number;
 };
 
 export enum DiscoverTypes {
@@ -244,9 +250,7 @@ export enum DiscoverTypes {
   GRID_3x,
 }
 
-export type DiscoverData = {
-  listings: DiscoverListings[];
-};
+export type DiscoverData = DiscoverListings[];
 
 export type DiscoverListings = {
   type: DiscoverTypes;
@@ -255,20 +259,16 @@ export type DiscoverListings = {
 };
 
 export type InfoData = {
-  id: string;
-  titles: {
-    primary: string;
-    secondary: string | undefined;
-  };
+  titles: Titles;
   altTitles: string[];
-  description: string | undefined;
+  description: string;
   poster: string;
-  banner: string | null | undefined;
+  banner?: string;
   status: Status;
-  totalMediaCount: number;
+  rating: number;
+  yearReleased: number;
   mediaType: MediaType;
   seasons: SeasonData[];
-  mediaList: MediaList[];
 };
 
 export type SeasonData = {
@@ -287,26 +287,32 @@ export type MediaPagination = {
   items: MediaInfo[];
 };
 
+export enum Language {
+  "en-US",
+  "en-GB",
+  "de-DE",
+  "fr-FR",
+}
+
 export type MediaInfo = {
   url: string;
   number: number;
-  image?: string;
+  thumbnail?: string;
   title?: string;
   description?: string;
+  language?: Language;
 };
 
 export type SearchData = {
   url: string;
-  img: string;
   title: string;
-  indicatorText: string;
-  currentCount: number;
-  totalCount: number;
+  poster: string;
+  indicator: string;
+  current?: number;
+  total?: number;
 };
 
-export type SearchResult = {
-  data: SearchData[];
-};
+export type SearchResult = SearchData[];
 
 export type ServerData = {
   name: string;
@@ -318,10 +324,15 @@ export type ServerList = {
   servers: ServerData[];
 };
 
+export enum MediaDataType {
+  HLS,
+  MP4,
+}
+
 export type MediaItem = {
   quality: string;
   file: string;
-  type: string;
+  type: MediaDataType;
 };
 
 export type SkipData = {
