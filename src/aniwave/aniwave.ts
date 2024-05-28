@@ -18,6 +18,7 @@ import {
   SeasonData,
   ServerData,
   MediaDataType,
+  SearchData,
 } from "../types";
 import { load } from "cheerio";
 import { parseSkipData } from "./utils/skipData";
@@ -53,20 +54,39 @@ export default class AniwaveModule extends BaseModule implements VideoContent {
     },
   ];
 
-  baseName: string = this.baseUrl; //this.getSettingValue("Domain");
+  baseName: string = this.getSettingValue("Domain");
 
   async discover(): Promise<DiscoverData> {
     return await new HomeScraper(this.baseName).scrape();
   }
 
-  async search(_query: string): Promise<SearchResult> {
-    return [];
+  async search(query: string): Promise<SearchResult> {
+    const resp = await request(`${this.baseName}/filter?keyword=${encodeURIComponent(query)}`, "GET");
+    const $ = load(resp.body);
+
+    const items: SearchData[] = $('#list-items > div.item').map((_i, anime) => {
+      const animeRef = $(anime);
+      
+      const metaRef = animeRef.find('div.b1 > a.name.d-title');
+      const url = metaRef.attr('href')?.split('/').pop() ?? '';
+      
+      const name = metaRef.text();
+      const img = animeRef.find('div > a > img').attr('src') ?? '';      
+      return {
+        url: `/watch/${url}`,
+        title: name,
+        poster: img,
+        indicator: "idk bruh"
+      } satisfies SearchData
+    }).get();
+
+    return items;
   }
 
   async info(_url: string): Promise<InfoData> {
     // Depending on where we come from, url may or may not have /watch/ in it.
     const watch = _url.startsWith("/watch/") ? "" : "/watch/";
-    const fullUrl = `${this.baseName}${watch}${_url}`;
+    const fullUrl = `${this.baseName}/${watch}${_url}`;
     const html = await request(fullUrl, "GET");
 
     const $ = load(html.body);

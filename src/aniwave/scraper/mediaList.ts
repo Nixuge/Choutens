@@ -9,7 +9,7 @@ export async function grabMediaList(
 ): Promise<MediaList[]> {
   // Depending on where we come from, url may or may not have /watch/ in it.
   const watch = _url.startsWith("/watch/") ? "" : "/watch/";
-  const fullUrl = `${baseName}${watch}${_url}`;
+  const fullUrl = `${baseName}/${watch}${_url}`;
   const html = await request(fullUrl, "GET");
 
   if (html.body.includes("<title>WAF</title>")) {
