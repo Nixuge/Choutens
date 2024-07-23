@@ -122,7 +122,6 @@ export default class AniwaveModule extends BaseModule implements VideoContent {
       ?.replace("background-image:url('", "")
       .replace("')", "")!;
 
-    // UNTESTED - SEASONS, TO TRY OUT.
     const seasonSlides = $(".seasons.swiper-wrapper .swiper-slide");
     const seasons: SeasonData[] = [];
     if (seasonSlides.length > 0) {
@@ -138,8 +137,13 @@ export default class AniwaveModule extends BaseModule implements VideoContent {
           selected: selected
         });
       });
+    } else {
+      seasons.push({
+        name: "Season 1", // Not sure where to grab the season number if there's none?
+        url: _url,
+        selected: true
+      } satisfies SeasonData)
     }
-    // END UNTESTED
 
     const playlistDetails: InfoData = {
       titles: {

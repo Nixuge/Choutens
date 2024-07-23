@@ -1,5 +1,5 @@
 import { load } from "cheerio";
-import { MediaInfo, MediaList } from "../../types";
+import { MediaList } from "../../types";
 import { AJAX_BASENAME } from "../utils/variables";
 import { getVrf } from "../utils/urlGrabber";
 

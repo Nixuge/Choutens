@@ -13,6 +13,14 @@ test("provides discover", async () => {
   log((await source.discover())[0].data[0])
 })
 
+test("provides search", async () => {
+  log((await source.search("One piece", 1)))
+})
+
+test("provides media info", async () => {
+  log((await source.info("/watch/one-piece.ov8")))
+})
+
 test("provides media list", async () => {
   log((await source.media("/watch/kami-no-tou-2nd-season.7j281"))[0].pagination[0].items)
 })
