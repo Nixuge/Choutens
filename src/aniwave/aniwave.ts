@@ -8,15 +8,15 @@ import {
   MediaList,
   Status,
   MediaType,
-  MediaSource,
+  MediaStream,
   ModuleSettings,
   ModuleType,
   InputTypes,
   InputSetting,
-  ServerList,
+  SourceList,
   DiscoverData,
   SeasonData,
-  ServerData,
+  SourceData,
   MediaDataType,
   SearchData,
 } from "../types";
@@ -54,39 +54,55 @@ export default class AniwaveModule extends BaseModule implements VideoContent {
     },
   ];
 
-  baseName: string = this.getSettingValue("Domain");
+  baseName: string = this.baseUrl; //this.getSettingValue("Domain");
 
   async discover(): Promise<DiscoverData> {
     return await new HomeScraper(this.baseName).scrape();
   }
 
-  async search(query: string): Promise<SearchResult> {
-    const resp = await request(`${this.baseName}/filter?keyword=${encodeURIComponent(query)}`, "GET");
+  async search(query: string, page: number): Promise<SearchResult> {
+    const resp = await request(
+      `${this.baseName}/filter?keyword=${encodeURIComponent(query)}&page=${page}`,
+      "GET",
+    );
+
     const $ = load(resp.body);
 
-    const items: SearchData[] = $('#list-items > div.item').map((_i, anime) => {
-      const animeRef = $(anime);
-      
-      const metaRef = animeRef.find('div.b1 > a.name.d-title');
-      const url = metaRef.attr('href')?.split('/').pop() ?? '';
-      
-      const name = metaRef.text();
-      const img = animeRef.find('div > a > img').attr('src') ?? '';      
-      return {
-        url: `/watch/${url}`,
-        title: name,
-        poster: img,
-        indicator: "idk bruh"
-      } satisfies SearchData
-    }).get();
+    const items: SearchData[] = $("#list-items > div.item")
+      .map((_i, anime) => {
+        const animeRef = $(anime);
 
-    return items;
+        const metaRef = animeRef.find("div.b1 > a.name.d-title");
+        const url = metaRef.attr("href")?.split("/").pop() ?? "";
+
+        const name = metaRef.text();
+        const img = animeRef.find("div > a > img").attr("src") ?? "";
+        return {
+          url: `/watch/${url}`,
+          titles: {
+            primary: name
+          },
+          poster: img,
+          indicator: "",
+        };
+      })
+      .get();
+
+    const totalPages = $(".pagination > li").last().attr("href")?.split("page=")[1]
+
+    console.log(totalPages)
+    return {
+      info: {
+        pages: parseInt(totalPages ?? "1")
+      },
+      results: items
+    };
   }
 
   async info(_url: string): Promise<InfoData> {
     // Depending on where we come from, url may or may not have /watch/ in it.
     const watch = _url.startsWith("/watch/") ? "" : "/watch/";
-    const fullUrl = `${this.baseName}/${watch}${_url}`;
+    const fullUrl = `${this.baseName}${watch}${_url}`;
     const html = await request(fullUrl, "GET");
 
     const $ = load(html.body);
@@ -115,10 +131,12 @@ export default class AniwaveModule extends BaseModule implements VideoContent {
         const a = seasonRef.find("a");
         const url = a.attr("href")!; // Not sure if this works anymore.
         const name = a.find(".name").text();
+        const selected = seasonRef.hasClass("active")
         seasons.push({
-          url,
-          name,
-        } satisfies SeasonData);
+          url: url,
+          name: name,
+          selected: selected
+        });
       });
     }
     // END UNTESTED
@@ -146,20 +164,20 @@ export default class AniwaveModule extends BaseModule implements VideoContent {
     return await grabMediaList(this.baseName, _url);
   }
 
-  async servers(_url: string): Promise<ServerList[]> {
+  async sources(_url: string): Promise<SourceList[]> {
     const [episodeId, variantType] = _url.split(" | ");
 
-    const html = (
-      await request(
-        `${AJAX_BASENAME}/server/list/${episodeId}?vrf=${getVrf(episodeId)}`,
-        "GET",
-      )
-    ).json()["result"];
+    const html = await request(
+      `${AJAX_BASENAME}/server/list/${episodeId}?vrf=${getVrf(episodeId)}`,
+      "GET",
+    );
 
-    const $ = load(html);
+    const json = JSON.parse(html.body);
+
+    const $ = load(json["result"]);
 
     // TODO- TEST: I THINK I FUCKED SMTH UP NOT SURE
-    const servers: ServerData[] = $(".type")
+    const servers: SourceData[] = $(".type")
       .map((_, serverCategory) => {
         const categoryRef = $(serverCategory);
         // const sourceType = categoryRef.find("label").text().trim()
@@ -176,7 +194,7 @@ export default class AniwaveModule extends BaseModule implements VideoContent {
             return {
               name: `${serverName}`,
               url: linkId,
-            } satisfies ServerData;
+            } satisfies SourceData;
           })
           .get();
       })
@@ -185,33 +203,51 @@ export default class AniwaveModule extends BaseModule implements VideoContent {
     return [
       {
         title: "Aniwave",
-        servers: servers,
-      } satisfies ServerList,
+        sources: servers,
+      } satisfies SourceList,
     ];
   }
 
-  async sources(_url: string): Promise<MediaSource> {
-    const result: any = (
-      await request(
+  async streams(_url: string): Promise<MediaStream> {
+    try {
+      let data = await request(
         `${AJAX_BASENAME}/server/${_url}?vrf=${getVrf(_url)}`,
         "GET",
-      )
-    ).json()["result"];
-    const url = decodeVideoSkipData(result["url"]);
-    let skipData = parseSkipData(decodeVideoSkipData(result["skip_data"]));
+      );
 
-    const sourceData = await getVideo(url);
-    const videos = sourceData.videos;
+      if(data.statusCode != 200) {
+        // @ts-ignore
+        await callWebview(`${AJAX_BASENAME}/server/${_url}?vrf=${getVrf(_url)}`)
+        data = await request(
+          `${AJAX_BASENAME}/server/${_url}?vrf=${getVrf(_url)}`,
+          "GET",
+        );
+      }
 
-    return {
-      sources: videos.map((video) => ({
-        quality: "p" + video.quality,
-        file: video.url,
-        type: MediaDataType.HLS,
-      })),
-      skips: skipData,
-      subtitles: sourceData.subtitles ?? [],
-      previews: [], // Pretty sure Aniwave doesn't send those.
-    } satisfies MediaSource;
+      const result = JSON.parse(data.body)["result"];
+      const url = decodeVideoSkipData(result["url"]);
+      let skipData = parseSkipData(decodeVideoSkipData(result["skip_data"]));
+
+      const sourceData = await getVideo(url);
+      const videos = sourceData.videos;
+
+      const mediaSource: MediaStream = {
+        streams: videos.map((video) => ({
+          quality: video.quality ?? "auto",
+          file: video.url,
+          type: MediaDataType.HLS,
+        })),
+        skips: skipData,
+        subtitles: sourceData.subtitles ?? [],
+        previews: [], // Pretty sure Aniwave doesn't send those.
+      };
+
+      console.log(`${mediaSource}`);
+
+      return mediaSource;
+    } catch (error) {
+      console.error(`${error}`);
+    }
+    throw "Streams failed.";
   }
 }

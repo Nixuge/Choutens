@@ -26,7 +26,13 @@ export async function getM3u8Qualities(mainFileUrl: string, opts: M3u8Opts = {})
     
     let m3u8Data: string = "";
     try {
-        m3u8Data = await request(mainFileUrl, "GET", opts.headers).then(resp => resp.body);
+        let data = await request(mainFileUrl, "GET", opts.headers)
+        if(data.statusCode != 200) {
+            // @ts-ignore
+            await callWebview(mainFileUrl)
+            data = await request(mainFileUrl, "GET", opts.headers)
+        }
+        m3u8Data = data.body;
     } catch(e) {
         throw Error("error grabbing m3u8data for url '" + mainFileUrl + "': " + e);
     }

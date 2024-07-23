@@ -7,37 +7,23 @@ declare global {
    * @param headers - Headers for the request, for example: Cookies or User-Agent
    * @param body - Body of the request in string form
    */
-  function request(
-    url: string,
-    method:
-      | "GET"
-      | "POST"
-      | "PUT"
-      | "HEAD"
-      | "DELETE"
-      | "CONNECT"
-      | "OPTIONS"
-      | "PATCH"
-      | "TRACE",
-    headers?: Record<string, string>,
-    body?: string,
-  ): Promise<Response>;
+  function request(url: string, method: "GET" | "POST" | "PUT" | "HEAD" | "DELETE" | "CONNECT" | "OPTIONS" | "PATCH" | "TRACE", headers?: Record<string, string>, body?: string): Promise<Response>;
 }
 
 export abstract class BaseModule {
-  abstract baseUrl: String;
+  abstract baseUrl: string;
 
   /**
    * The metadata for this module
    */
   abstract readonly metadata: {
-    readonly id: string;
-    readonly name: string;
-    readonly author: string;
-    readonly description?: string;
-    readonly type: ModuleType;
-    readonly subtypes: string[];
-    readonly version: string;
+      readonly id: string;
+      readonly name: string;
+      readonly author: string;
+      readonly description?: string;
+      readonly type: ModuleType;
+      readonly subtypes: string[];
+      readonly version: string;
   };
 
   abstract readonly settings: ModuleSettings;
@@ -49,17 +35,15 @@ export abstract class BaseModule {
    * @param newValue - The new value for the setting
    */
   updateSettingValue(settingId: string, newValue: any): void {
-    // Loop through each group and setting to find the setting with the given id
-    this.settings.forEach((group) => {
-      const settingToUpdate = group.settings.find(
-        (setting) => setting.id === settingId,
-      );
-      if (settingToUpdate) {
-        if (typeof settingToUpdate.value == typeof newValue) {
-          settingToUpdate.value = newValue;
-        }
-      }
-    });
+      // Loop through each group and setting to find the setting with the given id
+      this.settings.forEach((group) => {
+          const settingToUpdate = group.settings.find((setting) => setting.id === settingId);
+          if (settingToUpdate) {
+              if (typeof settingToUpdate.value == typeof newValue) {
+                  settingToUpdate.value = newValue;
+              }
+          }
+      });
   }
 
   /**
@@ -68,9 +52,9 @@ export abstract class BaseModule {
    * @param settingId The ID of the setting to retrieve
    */
   getSettingValue(settingId: string): any | undefined {
-    this.settings.forEach((group) => {
-      return group.settings.find((setting) => setting.id === settingId)?.value;
-    });
+      this.settings.forEach((group) => {
+          return group.settings.find((setting) => setting.id === settingId)?.value;
+      });
   }
 
   /**
@@ -78,13 +62,13 @@ export abstract class BaseModule {
    *
    * @param query - The search query
    */
-  abstract search(query: String): Promise<SearchResult>;
+  abstract search(query: string, page: number): Promise<SearchResult>;
   /**
    * Returns Infodata for a given url
    *
    * @param url - The url where the info data is found
    */
-  abstract info(url: String): Promise<InfoData>;
+  abstract info(url: string): Promise<InfoData>;
   /**
    * Returns discover data
    */
@@ -112,19 +96,19 @@ export class Response {
   headers: Record<string, string>;
 
   constructor(
-    statusCode: number,
-    body: string,
-    contentType: string,
-    //headers: Record<string, string>,
+      statusCode: number,
+      body: string,
+      contentType: string,
+      //headers: Record<string, string>,
   ) {
-    this.statusCode = statusCode;
-    this.body = body;
-    this.contentType = contentType;
-    this.headers = {};
+      this.statusCode = statusCode;
+      this.body = body;
+      this.contentType = contentType;
+      this.headers = {};
   }
 
   json(): any {
-    return JSON.parse(this.body);
+      return JSON.parse(this.body);
   }
 }
 
@@ -132,12 +116,7 @@ export type ModuleSettings = SettingsGroup[];
 
 export type SettingsGroup = {
   title: string;
-  settings: (
-    | SliderSetting
-    | ToggleSetting
-    | InputSetting<InputTypes>
-    | DropdownSetting<number>
-  )[];
+  settings: (SliderSetting | ToggleSetting | InputSetting<InputTypes> | DropdownSetting<number>)[];
 };
 
 export type SliderSetting = {
@@ -192,18 +171,27 @@ export enum ModuleType {
 
 export type VideoContent = {
   /**
-   * Fetches the servers of a given url
-   *
-   * @param url - The url where the servers are found
-   */
-  servers(url: string): Promise<ServerList[]>;
-
-  /**
    * Fetches the sources of a given url
    *
    * @param url - The url where the sources are found
    */
-  sources(url: string): Promise<MediaSource>;
+  sources(url: string): Promise<SourceList[]>;
+
+  /**
+   * Fetches the streams of a given url
+   *
+   * @param url - The url where the streams are found
+   */
+  streams(url: string): Promise<MediaStream>;
+};
+
+export type BookContent = {
+  /**
+   * Fetches the pages of a given url
+   *
+   * @param url - The url where the pages are found
+   */
+  pages(url: string): Promise<String[]>;
 };
 
 export enum Status {
@@ -274,6 +262,7 @@ export type InfoData = {
 export type SeasonData = {
   name: string;
   url: string;
+  selected?: boolean;
 };
 
 export type MediaList = {
@@ -305,23 +294,32 @@ export type MediaInfo = {
 
 export type SearchData = {
   url: string;
-  title: string;
+  titles: Titles;
   poster: string;
   indicator: string;
   current?: number;
   total?: number;
 };
 
-export type SearchResult = SearchData[];
+export type SearchResultInfo = {
+  count?: number;
+  pages: number;
+  next?: string;
+};
 
-export type ServerData = {
+export type SearchResult = {
+  info: SearchResultInfo;
+  results: SearchData[];
+};
+
+export type SourceData = {
   name: string;
   url: string;
 };
 
-export type ServerList = {
+export type SourceList = {
   title: string;
-  servers: ServerData[];
+  sources: SourceData[];
 };
 
 export enum MediaDataType {
@@ -354,17 +352,17 @@ export type SubtitleData = {
 };
 
 /**
- *
- * @property img: url string to preview img
- */
+*
+* @property img: url string to preview img
+*/
 export type MediaPreview = {
   img: string;
   time: number;
 };
 
-export type MediaSource = {
+export type MediaStream = {
   skips: SkipData[];
-  sources: MediaItem[];
+  streams: MediaItem[];
   subtitles: SubtitleData[];
   previews: MediaPreview[];
 };

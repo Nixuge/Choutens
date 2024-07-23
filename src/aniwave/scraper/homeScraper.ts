@@ -4,6 +4,7 @@ import {
   DiscoverListing,
   DiscoverListings,
   DiscoverTypes,
+  Response
 } from "../../types";
 
 export class HomeScraper {
@@ -17,11 +18,20 @@ export class HomeScraper {
   }
 
   async scrape(): Promise<DiscoverData> {
-    const html = await request(`${this.baseName}/home`, "GET").then(
-      (resp) => resp.body,
-    );
+    const html: Response = await request(`${this.baseName}/home`, "GET")
 
-    this.$ = cheerio.load(html);
+    if (html.body.includes("WAF") || html.statusCode != 200) {
+      // @ts-ignore
+      let cookies = await callWebview(`${this.baseName}/home`);
+      console.log(JSON.stringify(cookies));
+      const html2: Response = await request(`${this.baseName}/home`, "GET")
+
+      this.$ = cheerio.load(html2.body);
+
+      return this.scrapeAll();
+    }
+
+    this.$ = cheerio.load(html.body);
 
     return this.scrapeAll();
   }

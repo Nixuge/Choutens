@@ -9,7 +9,7 @@ export async function grabMediaList(
 ): Promise<MediaList[]> {
   // Depending on where we come from, url may or may not have /watch/ in it.
   const watch = _url.startsWith("/watch/") ? "" : "/watch/";
-  const fullUrl = `${baseName}/${watch}${_url}`;
+  const fullUrl = `${baseName}${watch}${_url}`;
   const html = await request(fullUrl, "GET");
 
   if (html.body.includes("<title>WAF</title>")) {
@@ -49,7 +49,9 @@ export async function grabMediaList(
 
   var answer: MediaList[] = [];
 
-  $$("li").map((_, li) => {
+  const epRange = $$(".ep-range > li");
+
+  epRange.map((_, li) => {
     const inScraper = $$(li);
     // data ids needed for next step
     const dataIds = inScraper.find("a").attr("data-ids")!;
@@ -57,7 +59,7 @@ export async function grabMediaList(
     const episodeNum = parseInt(inScraper.find("a").attr("data-num")!);
     // episode title
     const titleDiv = inScraper.find("a").find("span.d-title");
-    const episodeTitle = titleDiv.text() ? titleDiv.text() : undefined;
+    const episodeTitle = titleDiv.text() ?? undefined;
 
     // the "title" attribute on the lis has all the properties to grab sub/dub/softsub
     //let episodeReleaseDate: string | undefined = undefined;
@@ -75,6 +77,9 @@ export async function grabMediaList(
         //episodeReleaseDate = match[2]; // SHOULD work (should)
         continue;
       }
+
+      // console.log(episodeTitle)
+
       // Never happens, but makes the compiler happy
       // if (answer.pagination == undefined)
       //   answer.pagination = [];
@@ -84,20 +89,22 @@ export async function grabMediaList(
       // get playlist group for variantType
       let playlistGroup: MediaList | undefined = undefined;
       var playlistGroups = answer.filter(
-        (variant) => variant.title == variantType + " TITLE AT ROOT - TESTING",
+        (variant) => variant.title == variantType,
       );
       if (playlistGroups.length == 0) {
         var mediaList = {
-          title: variantType + " TITLE AT ROOT - TESTING",
+          title: variantType,
           pagination: [
             {
               id: variantType.toLowerCase() + "_id_at_sub",
-              title: variantType + " TITLE AT SUB - TESTING",
+              title: variantType,
               items: [],
             },
           ],
         } satisfies MediaList;
 
+        playlistGroups.push(mediaList);
+        playlistGroup = playlistGroups[0];
         answer.push(mediaList);
       } else {
         playlistGroup = playlistGroups[0];
@@ -108,9 +115,9 @@ export async function grabMediaList(
         title: episodeTitle,
         // TODO: See if image & description are available somewhere
       });
-      console.log(`${playlistGroup}`);
+      // console.log(`${playlistGroup}`);
     }
   });
-  console.log(`${answer[0]}`);
+  // console.log(`${answer[0]}`);
   return answer;
 }
