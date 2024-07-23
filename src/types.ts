@@ -224,9 +224,9 @@ export type DiscoverListing = {
   url: string;
   titles: Titles;
   poster: string;
-  description: string;
+  description?: string;
   label?: Label;
-  indicator: string;
+  indicator?: string;
   current?: number;
   total?: number;
 };

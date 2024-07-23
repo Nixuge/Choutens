@@ -74,8 +74,7 @@ export class HomeScraper {
             primary: title,
           },
           poster: image ?? "",
-          indicator: "what",
-          description: "No.",
+          description: undefined, // TODO: see if can scrape description somewhere
         } satisfies DiscoverListing;
       })
       .get();
@@ -108,8 +107,7 @@ export class HomeScraper {
           url: url,
           titles: { primary: title },
           poster: image ?? "",
-          description: "owo?",
-          indicator: "yee",
+          description: undefined, // TODO: same as above, see if can scrape description
         } satisfies DiscoverListing;
       })
       .get();
