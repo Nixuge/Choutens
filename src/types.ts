@@ -289,7 +289,7 @@ export type MediaInfo = {
   thumbnail?: string;
   title?: string;
   description?: string;
-  language?: Language;
+  indicator?: string;
 };
 
 export type SearchData = {

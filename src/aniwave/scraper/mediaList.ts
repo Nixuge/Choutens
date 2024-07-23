@@ -1,5 +1,5 @@
 import { load } from "cheerio";
-import { MediaList } from "../../types";
+import { MediaInfo, MediaList } from "../../types";
 import { AJAX_BASENAME } from "../utils/variables";
 import { getVrf } from "../utils/urlGrabber";
 
@@ -63,13 +63,16 @@ export async function grabMediaList(
 
     // the "title" attribute on the lis has all the properties to grab sub/dub/softsub
     //let episodeReleaseDate: string | undefined = undefined;
-    let variantReleaseDates:
+    let variantReleaseDatesRaw:
       | string
       | IterableIterator<RegExpMatchArray>
       | undefined = inScraper.attr("title");
-    variantReleaseDates = variantReleaseDates?.matchAll(
+    const variantReleaseDates = variantReleaseDatesRaw?.matchAll(
       /- ([a-zA-Z]*?): ([0-9]{4}\/[0-9]{2}\/[0-9]{2} [0-9]{2}:[0-9]{2} .*?) /g,
     )!;
+
+    // variantReleaseDatesRaw string also includes this if the episode is a filler
+    let filler = variantReleaseDatesRaw?.includes("** Filler Episode **");
 
     for (let match of variantReleaseDates) {
       const variantType = match[1];
@@ -113,8 +116,9 @@ export async function grabMediaList(
         url: dataIds + " | " + variantType.toLowerCase(), // kinda dirty but idk how else to pass data through to the next step,
         number: episodeNum,
         title: episodeTitle,
+        indicator: filler ? "Filler" : undefined
         // TODO: See if image & description are available somewhere
-      });
+      } satisfies MediaInfo );
       // console.log(`${playlistGroup}`);
     }
   });
