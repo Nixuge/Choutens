@@ -22,7 +22,7 @@ test("provides media info", async () => {
 })
 
 test("provides media list", async () => {
-  log((await source.media("/watch/kami-no-tou-2nd-season.7j281"))[0].pagination[0].items)
+  log((await source.media("/watch/kami-no-tou-2nd-season.4d3ek"))[0].pagination[0].items)
 })
 
 test("provides sources", async () => {
