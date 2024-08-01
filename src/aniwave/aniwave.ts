@@ -36,7 +36,7 @@ export default class AniwaveModule extends BaseModule implements VideoContent {
     description: "Chouten module for aniwave.to",
     type: ModuleType.Source,
     subtypes: ["Anime"],
-    version: "0.0.2",
+    version: "0.0.3",
   };
 
   settings: ModuleSettings = [
