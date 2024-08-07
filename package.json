@@ -1,4 +1,8 @@
 {
+  "scripts": {
+    "test": "vitest",
+    "build" : "esbuild ./src/aniwave/aniwave.ts --bundle --target=safari11 --outfile=code.js --global-name=source"
+  },
   "devDependencies": {
     "@types/cheerio": "^0.22.35",
     "cheerio": "^1.0.0-rc.12",
