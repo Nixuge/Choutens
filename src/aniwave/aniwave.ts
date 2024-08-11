@@ -37,6 +37,7 @@ export default class AniwaveModule extends BaseModule implements VideoContent {
     type: ModuleType.Source,
     subtypes: ["Anime"],
     version: "0.0.3",
+    iconPath: "./icons/aniwave.png"
   };
 
   settings: ModuleSettings = [
