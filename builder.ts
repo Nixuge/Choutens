@@ -92,7 +92,7 @@ async function buildRepo() {
     writeFileSync("./out/metadata.json", JSON.stringify(repoMeta, undefined, 4));
 
     // Temporary
-    writeFileSync("./out/index.html", "*** under construction ***<br><br>you should still be able to use this repos in the app.")
+    writeFileSync("./out/index.html", "*** under construction ***<br><br>you should still be able to use this repo in the app.")
 }
 
 rmSync("./out", {recursive: true})
