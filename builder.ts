@@ -1,18 +1,6 @@
 import { readdirSync, existsSync, copyFileSync, writeFileSync, readSync, readFileSync, rmdirSync, rmSync } from 'fs'
-import { exec } from 'child_process';
 import { zip } from 'zip-a-folder';
-
-// Yoined from the internet - promise for exec.
-function execShellCommand(cmd: string) {
-    return new Promise((resolve, reject) => {
-     exec(cmd, (error: unknown, stdout: unknown, stderr: unknown) => {
-      if (error) {
-       console.warn(error);
-      }
-      resolve(stdout? stdout : stderr);
-     });
-    });
-}
+import { build } from 'esbuild';
 
 function getDirectories(source: string) {
     return readdirSync(source, { withFileTypes: true })
@@ -45,7 +33,13 @@ async function buildModule(folder: string, index: string) {
     let moduleFolder = `./out/Modules/${meta.id}`
 
     // U love to see it - mkdirs all folders
-    await execShellCommand(`esbuild ${inputPath} --bundle --target=safari11 --outfile=${moduleFolder}/code.js --global-name=source`);
+    await build({
+        entryPoints: [`${inputPath}`],
+        bundle: true,
+        target: 'safari11',
+        outfile: `${moduleFolder}/code.js`,
+        globalName: 'source',
+    }).catch(() => process.exit(1));
     
     if (meta.iconPath) {
         const icon = meta.iconPath;
