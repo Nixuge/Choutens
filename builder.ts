@@ -1,4 +1,4 @@
-import { readdirSync, existsSync, copyFileSync, writeFileSync, readFileSync, rmSync } from 'fs'
+import { readdirSync, existsSync, copyFileSync, writeFileSync, readFileSync, rmSync, renameSync } from 'fs'
 import { zip } from 'zip-a-folder';
 import { build } from 'esbuild';
 
@@ -90,6 +90,10 @@ async function buildRepo() {
     }
 
     writeFileSync("./out/metadata.json", JSON.stringify(repoMeta, undefined, 4));
+
+    // Temporary (?)
+    await zip("./out", "./repo.zip");
+    renameSync("./repo.zip", "./out/repo.zip");
 
     // Temporary
     writeFileSync("./out/index.html", "*** under construction ***<br><br>you should still be able to use this repo in the app.")
