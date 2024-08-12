@@ -39,7 +39,7 @@ async function buildModule(folder: string, index: string) {
         target: 'safari11',
         outfile: `${moduleFolder}/code.js`,
         globalName: 'source',
-    }).catch(() => process.exit(1));
+    }).catch(() => { throw Error(`Couldn't run esbuild on file ${inputPath}.`) });
     
     if (meta.iconPath) {
         const icon = meta.iconPath;
