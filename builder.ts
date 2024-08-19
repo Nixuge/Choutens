@@ -1,4 +1,4 @@
-import { readdirSync, existsSync, copyFileSync, writeFileSync, readFileSync, rmSync, renameSync } from 'fs'
+import { readdirSync, existsSync, copyFileSync, writeFileSync, readFileSync, rmSync, renameSync, mkdirSync } from 'fs'
 import { zip } from 'zip-a-folder';
 import { build } from 'esbuild';
 
@@ -42,9 +42,19 @@ async function buildModule(folder: string, index: string) {
     }).catch(() => { throw Error(`Couldn't run esbuild on file ${inputPath}.`) });
     
     if (meta.iconPath) {
-        const icon = meta.iconPath;
+        const icon: string = meta.iconPath;
+        // Get the icon folder to eventually create it after
+        let iconFolder: string[] | string = icon.split("/")
+        iconFolder.pop()
+        iconFolder = iconFolder.join("/");       
+        
         if (existsSync(`./meta/${icon}`)) {
+            // Copy both inside the module AND in its provided path in the repo directly
             copyFileSync(`./meta/${icon}`, `${moduleFolder}/icon.png`);
+            if (!existsSync(`./out/${iconFolder}`)) {                
+                mkdirSync(`./out/${iconFolder}`)
+            }
+            copyFileSync(`./meta/${icon}`, `./out/${icon}`);
         } else {
             console.warn(`Provided icon "${icon}" couldn't be found.`);
         }
