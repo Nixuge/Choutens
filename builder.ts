@@ -74,6 +74,7 @@ async function buildRepo() {
         throw Error(`${configPath} file does not exist.`);
     }
     const repoMeta = JSON.parse(readFileSync(configPath).toString());
+    repoMeta["iconPath"] = "./icon.png";
     repoMeta["modules"] = [];
     
     // Build all modules
